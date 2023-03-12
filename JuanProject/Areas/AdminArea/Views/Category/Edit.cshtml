@@ -1,0 +1,34 @@
+﻿@model CategoryEditVM
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Areas/AdminArea/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Category Edit</h4>
+                    <form asp-controller="Category" asp-action="Edit" method="post" class="forms-sample">
+                        <div class="form-group">
+                            <label asp-for="Name" for="exampleInputUsername1">Name</label>
+                            <input asp-for="Name" class="form-control" id="exampleInputUsername1" placeholder="Name">
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary mr-2">Submit</button>
+                        <a asp-controller="Category" asp-action="Index" class="btn btn-light">Cancel</a>
+
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationPartial">
+    }
+
