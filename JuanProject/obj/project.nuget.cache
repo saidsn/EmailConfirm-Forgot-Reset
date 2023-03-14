@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "I0vk+QtmswfjJmwKQjmCfvV2TTpgHPZLElu05+Nlnq8FG0AEG5XKL8PbB1hJjyM+kwYj4bWsN0AWVzZ5bP3p3w==",
+  "dgSpecHash": "uIaKk5b/cmSNGFs+dRsldvZhf99gg+cAOFVQF9zDSrfk5HG0YUXO/dSdo8Wy2jNS/J4Ucvv2Yn6id05XM+2L0w==",
   "success": true,
-  "projectFilePath": "C:\\Users\\OMEN\\Desktop\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
+  "projectFilePath": "C:\\Users\\OMEN\\Desktop\\Code-Academy\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\OMEN\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\OMEN\\.nuget\\packages\\mailkit\\3.4.2\\mailkit.3.4.2.nupkg.sha512",

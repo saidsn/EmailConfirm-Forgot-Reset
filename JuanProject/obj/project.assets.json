@@ -10311,11 +10311,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\OMEN\\Desktop\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
+      "projectUniqueName": "C:\\Users\\OMEN\\Desktop\\Code-Academy\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
       "projectName": "JuanProject",
-      "projectPath": "C:\\Users\\OMEN\\Desktop\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
+      "projectPath": "C:\\Users\\OMEN\\Desktop\\Code-Academy\\P-326\\Asp-net\\JuanProject\\JuanProject\\JuanProject.csproj",
       "packagesPath": "C:\\Users\\OMEN\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\OMEN\\Desktop\\P-326\\Asp-net\\JuanProject\\JuanProject\\obj\\",
+      "outputPath": "C:\\Users\\OMEN\\Desktop\\Code-Academy\\P-326\\Asp-net\\JuanProject\\JuanProject\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

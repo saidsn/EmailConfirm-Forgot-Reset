@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MimeKit;
 using MimeKit.Text;
-
 using System.IO;
+
 
 namespace JuanProject.Controllers
 {
@@ -55,20 +55,20 @@ namespace JuanProject.Controllers
 
             string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            string link = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, token },
-                          Request.Scheme,Request.Host.ToString());
+            string link = Url.Action(nameof(ConfirmEmail), "Account", new {userId = user.Id,token},
+                Request.Scheme,Request.Host.ToString());
 
 
             // create email message
             var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse("seidnuraliyev29@gmail.com"));
+            email.From.Add(MailboxAddress.Parse("saidsn@code.edu.az"));
             email.To.Add(MailboxAddress.Parse(user.Email));
-            email.Subject = "Verify email";
-            string body = string.Empty;
+            email.Subject = "Verify Email";
 
-            using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
+            string body = string.Empty;
+            using(StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
             {
-                body = reader.ReadToEnd();
+               body = reader.ReadToEnd(); 
             }
 
             body = body.Replace("{{link}}", link);
@@ -79,13 +79,27 @@ namespace JuanProject.Controllers
             // send email
             using var smtp = new SmtpClient();
             smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            smtp.Authenticate("seidnuraliyev29@gmail.com", "umedzhbnlkgqrlwq");
+            smtp.Authenticate("saidsn@code.edu.az", "gzdmzmoafyhdvxqy");
             smtp.Send(email);
             smtp.Disconnect(true);
 
 
-
             return RedirectToAction(nameof(VerifyEmail));
+        }
+
+        public async Task<IActionResult> ConfirmEmail(string userId,string token)
+        {
+            if (userId == null || token == null) return NotFound();
+            
+            AppUser user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null) return NotFound();
+
+            await _userManager.ConfirmEmailAsync(user, token);
+
+            await _signInManager.SignInAsync(user, false);
+
+            return RedirectToAction(nameof(Login));
         }
 
         public IActionResult VerifyEmail()
@@ -93,20 +107,123 @@ namespace JuanProject.Controllers
             return View();
         }
 
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        public IActionResult ForgotPassword()
         {
-            if (userId == null || token == null) return NotFound();
+            return View();
+        }
 
-            AppUser user = await _userManager.FindByIdAsync(userId);
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordVM forgotPassword)
+        {
+            if(!ModelState.IsValid) return NotFound();
 
-            if (user == null) return NotFound();
+            AppUser exsistUser = await _userManager.FindByEmailAsync(forgotPassword.Email);
 
-            await _userManager.ConfirmEmailAsync(user,token);
+            if(exsistUser == null)
+            {
+                ModelState.AddModelError("Email", "Email isn't found");
+                return View(); 
+            }
 
-            await _signInManager.SignInAsync(user, false);
+            string token = await _userManager.GeneratePasswordResetTokenAsync(exsistUser);
 
+            string link = Url.Action(nameof(ResetPassword), "Account", new { userId = exsistUser.Id, token },
+                Request.Scheme, Request.Host.ToString());
+
+
+            // create email message
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse("saidsn@code.edu.az"));
+            email.To.Add(MailboxAddress.Parse(exsistUser.Email));
+            email.Subject = "Verify reset password Email";
+
+            string body = string.Empty;
+            using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
+            {
+                body = reader.ReadToEnd();
+            }
+
+            body = body.Replace("{{link}}", link);
+            body = body.Replace("{{Fullname}}", exsistUser.FullName);
+
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+            // send email
+            using var smtp = new SmtpClient();
+            smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+            smtp.Authenticate("saidsn@code.edu.az", "gzdmzmoafyhdvxqy");
+            smtp.Send(email);
+            smtp.Disconnect(true);
+
+            return RedirectToAction(nameof(VerifyEmail));
+
+        }
+
+
+
+
+
+
+        public async Task<IActionResult> ResetPassword(string userId, string token)
+        {
+            ResetPasswordVM resetPassword = new ResetPasswordVM()
+            { 
+               UserId = userId,
+               Token = token
+            };
+            return View(resetPassword);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordVM resetPassword)
+        {
+            if (!ModelState.IsValid) return View();
+
+            
+
+            AppUser exsistUser = await _userManager.FindByIdAsync(resetPassword.UserId);
+
+            
+            bool chekPassword = await _userManager.VerifyUserTokenAsync(exsistUser,_userManager.Options.Tokens.PasswordResetTokenProvider,"ResetPassword",resetPassword.Token);
+
+            if (!chekPassword) return Content("Error");
+  
+
+            if (exsistUser == null) return NotFound();
+
+            if(await _userManager.CheckPasswordAsync(exsistUser, resetPassword.Password))
+            {
+                ModelState.AddModelError("", "This password is your last password");
+                return View(resetPassword);
+            }
+
+
+
+            await _userManager.ResetPasswordAsync(exsistUser,resetPassword.Token,resetPassword.Password);
+
+            await _userManager.UpdateSecurityStampAsync(exsistUser);
+          
             return RedirectToAction(nameof(Login));
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         [HttpGet]
         public IActionResult Login()
@@ -155,91 +272,135 @@ namespace JuanProject.Controllers
         }
 
 
-        public IActionResult ForgotPassword()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordVM forgotPassword)
-        {
-            if (!ModelState.IsValid) return View();
-
-            AppUser exsistUser = await _userManager.FindByEmailAsync(forgotPassword.Email);
-
-            if(exsistUser == null)
-            {
-                ModelState.AddModelError("Email", "User not Found");
-                return View();
-            }
-
-
-            string token = await _userManager.GeneratePasswordResetTokenAsync(exsistUser);
-
-            string link = Url.Action(nameof(ResetPassword), "Account", new { userId = exsistUser.Id, token },
-                          Request.Scheme, Request.Host.ToString());
 
 
 
-            // create email message
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse("seidnuraliyev29@gmail.com"));
-            email.To.Add(MailboxAddress.Parse(exsistUser.Email));
-            email.Subject = "Verify password reset email";
-            string body = string.Empty;
-
-            using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
-            {
-                body = reader.ReadToEnd();
-            }
-
-            body = body.Replace("{{link}}", link);
-            body = body.Replace("{{Fullname}}", exsistUser.FullName);
-
-            email.Body = new TextPart(TextFormat.Html) { Text = body };
-
-            // send email
-            using var smtp = new SmtpClient();
-            smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            smtp.Authenticate("seidnuraliyev29@gmail.com", "umedzhbnlkgqrlwq");
-            smtp.Send(email);
-            smtp.Disconnect(true);
-
-            return RedirectToAction(nameof(VerifyEmail));
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ResetPassword(string userId, string token)
-        {
-            ResetPasswordVM resetPasswordVM = new ResetPasswordVM()
-            { 
-                UserId = userId,
-                Token = token
-            };
-
-            return View(resetPasswordVM);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResetPassword(ResetPasswordVM resetPassword)
-        {
-            if (!ModelState.IsValid) return View();
-
-            AppUser exsistUser = await _userManager.FindByIdAsync(resetPassword.UserId);
-
-            if (exsistUser == null) return NotFound();
 
 
-            if(await _userManager.CheckPasswordAsync(exsistUser,resetPassword.Password))
-            {
-                ModelState.AddModelError("", "This Password is your old password");
-                return View(resetPassword);
-            }
 
-            await _userManager.ResetPasswordAsync(exsistUser, resetPassword.Token, resetPassword.Password);
 
-            return RedirectToAction(nameof(Login));
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //public IActionResult ForgotPassword()
+        //{
+        //    return View();
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> ForgotPassword(ForgotPasswordVM forgotPassword)
+        //{
+        //    if (!ModelState.IsValid) return View();
+
+        //    AppUser exsistUser = await _userManager.FindByEmailAsync(forgotPassword.Email);
+
+        //    if(exsistUser == null)
+        //    {
+        //        ModelState.AddModelError("Email", "User not Found");
+        //        return View();
+        //    }
+
+
+        //    string token = await _userManager.GeneratePasswordResetTokenAsync(exsistUser);
+
+        //    string link = Url.Action(nameof(ResetPassword), "Account", new { userId = exsistUser.Id, token },
+        //                  Request.Scheme, Request.Host.ToString());
+
+
+
+        //    // create email message
+        //    var email = new MimeMessage();
+        //    email.From.Add(MailboxAddress.Parse("seidnuraliyev29@gmail.com"));
+        //    email.To.Add(MailboxAddress.Parse(exsistUser.Email));
+        //    email.Subject = "Verify password reset email";
+        //    string body = string.Empty;
+
+        //    using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
+        //    {
+        //        body = reader.ReadToEnd();
+        //    }
+
+        //    body = body.Replace("{{link}}", link);
+        //    body = body.Replace("{{Fullname}}", exsistUser.FullName);
+
+        //    email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+        //    // send email
+        //    using var smtp = new SmtpClient();
+        //    smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+        //    smtp.Authenticate("seidnuraliyev29@gmail.com", "umedzhbnlkgqrlwq");
+        //    smtp.Send(email);
+        //    smtp.Disconnect(true);
+
+        //    return RedirectToAction(nameof(VerifyEmail));
+        //}
+
+        //[HttpGet]
+        //public async Task<IActionResult> ResetPassword(string userId, string token)
+        //{
+        //    ResetPasswordVM resetPasswordVM = new ResetPasswordVM()
+        //    { 
+        //        UserId = userId,
+        //        Token = token
+        //    };
+
+        //    return View(resetPasswordVM);
+        //}
+
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> ResetPassword(ResetPasswordVM resetPassword)
+        //{
+        //    if (!ModelState.IsValid) return View();
+
+        //    AppUser exsistUser = await _userManager.FindByIdAsync(resetPassword.UserId);
+
+        //    if (exsistUser == null) return NotFound();
+
+
+        //    if(await _userManager.CheckPasswordAsync(exsistUser,resetPassword.Password))
+        //    {
+        //        ModelState.AddModelError("", "This Password is your old password");
+        //        return View(resetPassword);
+        //    }
+
+        //    await _userManager.ResetPasswordAsync(exsistUser, resetPassword.Token, resetPassword.Password);
+
+        //    return RedirectToAction(nameof(Login));
+        //}
     }
 }
