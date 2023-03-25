@@ -1,4 +1,5 @@
 ﻿using JuanProject.Models;
+using JuanProject.Services.Interfaces;
 using JuanProject.ViewModels.AccountVM;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -15,11 +16,19 @@ namespace JuanProject.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IEmailService _emailService;
+        private readonly IFileService _fileService;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+
+        public AccountController(UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            IEmailService emailService,
+            IFileService fileService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailService = emailService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -58,31 +67,18 @@ namespace JuanProject.Controllers
             string link = Url.Action(nameof(ConfirmEmail), "Account", new {userId = user.Id,token},
                 Request.Scheme,Request.Host.ToString());
 
-
-            // create email message
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse("saidsn@code.edu.az"));
-            email.To.Add(MailboxAddress.Parse(user.Email));
-            email.Subject = "Verify Email";
-
             string body = string.Empty;
-            using(StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
-            {
-               body = reader.ReadToEnd(); 
-            }
+
+            string path = "wwwroot/Template/Verify.html";
+            body = _fileService.ReadFile(path, body);
+          
 
             body = body.Replace("{{link}}", link);
             body = body.Replace("{{Fullname}}", user.FullName);
 
-            email.Body = new TextPart(TextFormat.Html) { Text = body };
 
-            // send email
-            using var smtp = new SmtpClient();
-            smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            smtp.Authenticate("saidsn@code.edu.az", "gzdmzmoafyhdvxqy");
-            smtp.Send(email);
-            smtp.Disconnect(true);
-
+            string subject = "Verify Email";
+            _emailService.Send(user.Email, subject, body);
 
             return RedirectToAction(nameof(VerifyEmail));
         }
@@ -132,38 +128,23 @@ namespace JuanProject.Controllers
                 Request.Scheme, Request.Host.ToString());
 
 
-            // create email message
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse("saidsn@code.edu.az"));
-            email.To.Add(MailboxAddress.Parse(exsistUser.Email));
-            email.Subject = "Verify reset password Email";
 
             string body = string.Empty;
-            using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
-            {
-                body = reader.ReadToEnd();
-            }
+
+            string path = "wwwroot/Template/Verify.html";
+            body = _fileService.ReadFile(path, body);
+
 
             body = body.Replace("{{link}}", link);
             body = body.Replace("{{Fullname}}", exsistUser.FullName);
 
-            email.Body = new TextPart(TextFormat.Html) { Text = body };
 
-            // send email
-            using var smtp = new SmtpClient();
-            smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            smtp.Authenticate("saidsn@code.edu.az", "gzdmzmoafyhdvxqy");
-            smtp.Send(email);
-            smtp.Disconnect(true);
+            string subject = "Verify Email";
+            _emailService.Send(exsistUser.Email, subject, body);
 
             return RedirectToAction(nameof(VerifyEmail));
 
         }
-
-
-
-
-
 
         public async Task<IActionResult> ResetPassword(string userId, string token)
         {
@@ -207,23 +188,6 @@ namespace JuanProject.Controllers
           
             return RedirectToAction(nameof(Login));
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         [HttpGet]
         public IActionResult Login()
@@ -270,137 +234,6 @@ namespace JuanProject.Controllers
 
             return RedirectToAction("Index", "Home");
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //public IActionResult ForgotPassword()
-        //{
-        //    return View();
-        //}
-
-        //[HttpPost]
-        //public async Task<IActionResult> ForgotPassword(ForgotPasswordVM forgotPassword)
-        //{
-        //    if (!ModelState.IsValid) return View();
-
-        //    AppUser exsistUser = await _userManager.FindByEmailAsync(forgotPassword.Email);
-
-        //    if(exsistUser == null)
-        //    {
-        //        ModelState.AddModelError("Email", "User not Found");
-        //        return View();
-        //    }
-
-
-        //    string token = await _userManager.GeneratePasswordResetTokenAsync(exsistUser);
-
-        //    string link = Url.Action(nameof(ResetPassword), "Account", new { userId = exsistUser.Id, token },
-        //                  Request.Scheme, Request.Host.ToString());
-
-
-
-        //    // create email message
-        //    var email = new MimeMessage();
-        //    email.From.Add(MailboxAddress.Parse("seidnuraliyev29@gmail.com"));
-        //    email.To.Add(MailboxAddress.Parse(exsistUser.Email));
-        //    email.Subject = "Verify password reset email";
-        //    string body = string.Empty;
-
-        //    using (StreamReader reader = new StreamReader("wwwroot/Template/Verify.html"))
-        //    {
-        //        body = reader.ReadToEnd();
-        //    }
-
-        //    body = body.Replace("{{link}}", link);
-        //    body = body.Replace("{{Fullname}}", exsistUser.FullName);
-
-        //    email.Body = new TextPart(TextFormat.Html) { Text = body };
-
-        //    // send email
-        //    using var smtp = new SmtpClient();
-        //    smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-        //    smtp.Authenticate("seidnuraliyev29@gmail.com", "umedzhbnlkgqrlwq");
-        //    smtp.Send(email);
-        //    smtp.Disconnect(true);
-
-        //    return RedirectToAction(nameof(VerifyEmail));
-        //}
-
-        //[HttpGet]
-        //public async Task<IActionResult> ResetPassword(string userId, string token)
-        //{
-        //    ResetPasswordVM resetPasswordVM = new ResetPasswordVM()
-        //    { 
-        //        UserId = userId,
-        //        Token = token
-        //    };
-
-        //    return View(resetPasswordVM);
-        //}
-
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> ResetPassword(ResetPasswordVM resetPassword)
-        //{
-        //    if (!ModelState.IsValid) return View();
-
-        //    AppUser exsistUser = await _userManager.FindByIdAsync(resetPassword.UserId);
-
-        //    if (exsistUser == null) return NotFound();
-
-
-        //    if(await _userManager.CheckPasswordAsync(exsistUser,resetPassword.Password))
-        //    {
-        //        ModelState.AddModelError("", "This Password is your old password");
-        //        return View(resetPassword);
-        //    }
-
-        //    await _userManager.ResetPasswordAsync(exsistUser, resetPassword.Token, resetPassword.Password);
-
-        //    return RedirectToAction(nameof(Login));
-        //}
+     
     }
 }

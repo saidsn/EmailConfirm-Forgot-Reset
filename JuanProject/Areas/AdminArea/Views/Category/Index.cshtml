@@ -29,7 +29,7 @@
                                 {
                                     <tr class="table-info">
                                         <td>
-                                            @category.Name
+                                            @Html.Raw(category.Name)
                                         </td>
                                         <td style="text-align:center">
                                             <a asp-action="Detail" asp-route-id="@category.Id" class="btn btn-primary">Detail</a>

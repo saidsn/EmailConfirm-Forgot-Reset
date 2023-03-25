@@ -13,13 +13,13 @@
                     <form asp-controller="Category" asp-action="Create" method="post" class="forms-sample">
                         <div class="form-group">
                             <label asp-for="Name" for="exampleInputUsername1">Name</label>
-                            <input asp-for="Name" class="form-control" id="exampleInputUsername1" placeholder="Name">
-                            <span asp-validation-for="Name" class="text-danger" ></span>
+                            <textarea asp-for="Name" id="Name"></textarea>
+                            <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
                         <button type="submit" class="btn btn-primary mr-2">Submit</button>
                         <a asp-controller="Category" asp-action="Index" class="btn btn-light">Cancel</a>
 
-                      
+
                     </form>
                 </div>
             </div>
@@ -29,5 +29,12 @@
 
 @section Scripts{
     <partial name="_ValidationPartial">
-}
+    <script src="~/ckeditor/ckeditor.js"></script>
+        <script>
+            CKEDITOR.replace("Name")
+        </script>
+
+    }
+
+   
 
